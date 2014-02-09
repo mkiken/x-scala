@@ -17,8 +17,9 @@
 
 ### Node.js
 
-HomeBrewがあれば，
+Homebrew(<http://brew.sh/>)が入っていれば，
 `brew install Node`
+入っていない場合はこちらからインストールしてください → <http://nodejs.org/>
 
 
 ### PEG.js (<http://pegjs.majda.cz/>)
@@ -50,7 +51,7 @@ HomeBrewがあれば，
 環境変数XSCALA_HOMEにホームの絶対パスを入れてください．
 
 例：
-`export XSCALA_HOME=/Users/USER_NAME/Desktop/PEG_Scala`
+`export XSCALA_HOME=/Users/USER_NAME/Desktop/x-scala`
 
 scalaディレクトリで
 
