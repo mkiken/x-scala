@@ -1,6 +1,6 @@
-**eXtensible-Scala(X-Scala)**
+# eXtensible-Scala(X-Scala)
 
-*Scala言語向けHygienic構文マクロシステム*
+**Scala言語向けHygienic構文マクロシステム**
 
 
 
@@ -8,26 +8,26 @@
 以下では，このファイル（README.md）が置かれているディレクトリをホームと呼びます．
 
 
-# 他に必要なシステム
+## 他に必要なシステム
 
-## Ypsilon (<https://code.google.com/p/ypsilon/>)
+### Ypsilon (<https://code.google.com/p/ypsilon/>)
 
 <http://www.littlewingpinball.net/mediawiki-ja/index.php/Ypsilon_Scheme_System>のインストール方法に従ってください．
 
 
-## Node.js
+### Node.js
 
 HomeBrewがあれば，
 `brew install Node`
 
 
-## PEG.js (<http://pegjs.majda.cz/>)
+### PEG.js (<http://pegjs.majda.cz/>)
 
 ホームで
 `npm install pegjs`
 
 
-## sexpression (<https://github.com/f-kubotar/sexpression>)
+### sexpression (<https://github.com/f-kubotar/sexpression>)
 
 ホームで
 `npm install sexpression`
@@ -35,7 +35,7 @@ HomeBrewがあれば，
 
 
 
-# 動作確認
+## 動作確認
 
 * OS              : Mac OS X 10.9.1
 * Ypsilon         : Ypsilon 0.9.6-trunk/r506
@@ -45,7 +45,7 @@ HomeBrewがあれば，
 
 
 
-# 使い方
+## 使い方
 
 環境変数XSCALA_HOMEにホームの絶対パスを入れてください．
 
