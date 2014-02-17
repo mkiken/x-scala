@@ -6,15 +6,9 @@ module.exports = (function () {
     var start = 'start\n = CompilationUnit\n\n';
 		var characterStatement = 'CharacterStatement\n = &{}\n\n';
 		var oneLine = 'OneLine\n = &{}\n\n';
-    var macroExpression = 'ExpressionMacro\n = ';
-    var macroType = 'TypeMacro\n = ';
-    var rejectWords = 'RejectWords\n = ';
-    var index = 0;
-    var grms = [];
-
-    function makeNonTerminal(str){
-        return str + "__" + index++;
-    }
+    var macroExpression = 'ExpressionMacro\n = '
+    var macroType = 'TypeMacro\n = '
+    var rejectWords = 'RejectWords\n = '
 
     var pegObj = {
         // enclosing types
@@ -32,22 +26,16 @@ module.exports = (function () {
                     var template = context === 'template';
                     var len = mark.length;
                     var m = len>0 ? '__ "' + mark.join('" __ "') + '" ' : '';
-                    var nt = makeNonTerminal(this.type);
-                    var nt1 = makeNonTerminal(nt);
-                    var nt2 = makeNonTerminal(nt);
-                    grms.push(nt1 + ' = ' + m + '__ ' + this.elements.toCode(context) );
-                    if(template) grms.push(nt2 + ' = ' + m + '__ "..."\n');
-                    grms.push(nt + ' = head:' + this.elements.toCode(context)
-                        + '\n tail:' + nt1 + '*\n'
-                        + (template? 'ellipsis:' + nt2 : '')
+                    return '(head:' + this.elements.toCode(context)
+                        + '\n tail:(' + m + '__ ' + this.elements.toCode(context) + ')*\n'
+                        + (template? 'ellipsis:(' + m + '__ "...")\n' : '')
                         + '{ var elements = [head];\n'
                         + '  for (var i=0; i<tail.length; i++) {\n'
                         + '    elements.push(tail[i][' + (len*2+1) +']);\n'
                         + '  }\n'
                         + (template? '  if (ellipsis) elements.push({ type: "Ellipsis" });\n' : '')
                         + '  return { type: "Repeat", elements: elements };\n'
-                        + '}\n');
-                    return nt;
+                        + '})\n';
                         // + '})?\n';
                 }
             };
@@ -61,11 +49,8 @@ module.exports = (function () {
                     type: type,
                     elements: elements,
                     toCode: function (context) {
-
-                        var nt = makeNonTerminal(this.type);
-                        grms.push(nt + ' = ' + (this.elements? 't0:' + this.elements.toCode(context) + ' __ ' : '') + '\n { return { type: "RepBlock", elements: ' + (this.elements? 't0' : '[]') + ' }; }');
-                        // grms.push(str);
-                        return nt;
+                        return '(' + (this.elements? 't0:' + this.elements.toCode(context) + ' __ ' : '') + '\n\
+{ return { type: "RepBlock", elements: ' + (this.elements? 't0' : '[]') + ' }; })';
                     }
                 };
                 break;
@@ -76,9 +61,8 @@ module.exports = (function () {
                     type: type,
                     elements: elements,
                     toCode: function (context) {
-                        var nt = makeNonTerminal(this.type);
-                        grms.push(nt + ' = ' + pegObj[type].left + ' __ ' + (this.elements? 't0:' + this.elements.toCode(context) + ' __ ' : '') + pegObj[type].right + '\n { return { type: "' + type + '", elements: ' + (this.elements? 't0' : '[]') + ' }; }');
-                        return nt;
+                        return '(' + pegObj[type].left + ' __ ' + (this.elements? 't0:' + this.elements.toCode(context) + ' __ ' : '') + pegObj[type].right + '\n\
+{ return { type: "' + type + '", elements: ' + (this.elements? 't0' : '[]') + ' }; })';
                     }
                 };
                 break;
@@ -123,9 +107,8 @@ module.exports = (function () {
                 type: 'LiteralKeyword',
                 name: name,
                 toCode: function (context) {
-                    var nt = makeNonTerminal(this.type);
-                    grms.push(nt + ' = v:MacroKeyword &{ return v.name === "' + name + '"; }\n { return v; }');
-                    return nt;
+                     return '(v:MacroKeyword &{ return v.name === "' + name + '"; }\n\
+{ return v; })';
                 }
             };
         },
@@ -136,9 +119,8 @@ module.exports = (function () {
                 type: 'PunctuationMark',
                 value: value,
                 toCode: function (context) {
-                    var nt = makeNonTerminal(this.type);
-                    grms.push(nt + ' = "' + value + '"\n { return { type: "PunctuationMark", value: "' + value + '" }; }');
-                    return nt;
+                    return '("' + value + '"\n\
+{ return { type: "PunctuationMark", value: "' + value + '" }; })';
                 }
             };
         },
@@ -146,13 +128,12 @@ module.exports = (function () {
         // Literal
         literal: function(type, value) {
         	return {
-                type: type,
-                value: value,
-                toCode: function (context) {
-                    var nt = makeNonTerminal(this.type);
-                    grms.push(nt +  ' = v:Literal &{ return v.type === "'+ type +'" && String(v.value) == "' + value + '"; }\n { return v; }');
-				    return nt;
-                }
+              type: type,
+              value: value,
+              toCode: function (context) {
+                return '(v:Literal &{ return v.type === "'+ type +'" && String(v.value) == "' + value + '"; }\n\
+										{ return v; })';
+              }
             };
         },
 
@@ -162,14 +143,13 @@ module.exports = (function () {
                 type: 'MacroName',
                 name: name,
                 toCode: function (context) {
-                    var nt = makeNonTerminal(this.type);
-                    grms.push(nt + ' = "' + name + '" !IdentifierPart\n { return { type: "MacroName", name:"' + name + '" }; }');
-                    return nt;
+                    return '("' + name + '" !IdentifierPart\n\
+{ return { type: "MacroName", name:"' + name + '" }; })';
                 }
             };
         },
 
-		//name : マクロ名、body: パターン
+				//name : マクロ名、body: パターン
         macroForm: function (name, body) {
             var form = [name];
             var obj;
@@ -209,9 +189,7 @@ module.exports = (function () {
                             n++;
                         }
                     }
-                    var nt = makeNonTerminal(this.type);
-                    grms.push(nt + ' = ' + es.join(' __ ') + ' { return [' + tags.join(', ') + ']; }');
-                    return nt;
+                    return '(' + es.join(' __ ') + ' { return [' + tags.join(', ') + ']; })';
                 }
             };
         }//,
@@ -455,7 +433,6 @@ generator.generate = function(jsObj) {
 			+ (expressionMacros.length > 0 ?  macroExpression + expressionMacros.join(' \n / ') + '\n\n' : '')
       + (typeMacros.length > 0 ?  macroType + typeMacros.join(' \n / ') + '\n\n' : '')
       + (keywords.length > 0 ?  rejectWords + keywords.map(function(e){return '"' + e + '"'}).join(' \n / ') + '\n\n' : '')
-      + (grms.length > 0 ? grms.join(' \n') : '');
   }
   else {
     return 'error';
