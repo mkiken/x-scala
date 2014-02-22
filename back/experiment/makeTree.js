@@ -7,7 +7,7 @@ var gram = fs.readFileSync( args[3], 'utf8');
 // var parser = PEG.buildParser(gram, {cache: true});
 	var tu = require('./time_util.js');
 
-var start, end, res = [], m, s, rep = 1;
+var start, end, res = [], m, s, rep = 10;
 	console.error("makeTree: 解析器作成（キャッシュあり）");
 	for(var i = 0; i < rep; i++){
 		start = new Date();
