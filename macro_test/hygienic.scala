@@ -26,7 +26,7 @@ Expression Abs {
 object Abs_Hygienic{
 
   def main(args: Array[String]): Unit = {
-val b = 10;
+    val b = 9;
     def id(a: Int){
       println(a);
       b = b + 1;

@@ -84,34 +84,6 @@ function ScalaTag(name, elements){
 	return exprs;
 }
 
-//ブロック内の変数宣言を全てブロック文に変換する
-function decl2Block(stats, pos){
-    var res = [];
-    for(var i = pos; i < stats.length; i++){
-        var e = stats[i];
-        if(e.type == 'BlockStat'){
-            blockLevel++;
-  			//定義を初期化
-  			varDefines[blockLevel] = [];
-  			var sts = ax(e);
-  			if(varDefines[blockLevel].length == 0){
-  				//空だとnullになってしまうので，消えないようにしておく
-  				varDefines[blockLevel].push({notDelete:true});
-  			}
-  			blockLevel--;
-              // var contents = encloses('letrec*', varDefines[blockLevel + 1], sts, decl2Block(stats, i+1));
-  			var contents = encloses('letrec*', varDefines[blockLevel + 1], sts).concat(decl2Block(stats, i+1));
-  			var result = ScalaTag("BlockExpression", [contents]);
-  			res.push(result);
-  			break;
-        }
-        else{
-            res.push(ax(e));
-        }
-    }
-    return res;
-}
-
 function ax(t) {
 	if(t === null || t === "") return null;
 	else if (!t) throw (new Error('Invalid AST node: ' + JSON.stringify(t) ));
@@ -165,17 +137,15 @@ function ax(t) {
   						 blockLevel++;
   						 //定義を初期化
   						 varDefines[blockLevel] = [];
-  						 sts = decl2Block(t.states, 0);
+  						 sts = ax(t.states);
   						 res = ax(t.res);
   						 if(varDefines[blockLevel].length == 0){
   							 //空だとnullになってしまうので，消えないようにしておく
   							 varDefines[blockLevel].push({notDelete:true});
   						 }
-                           // result = encloses('letrec*', varDefines[blockLevel], sts, res);
-  						 result = encloses('letrec*', varDefines[blockLevel]).concat(sts);
-  						 result.push(res);
+  						 result = encloses('letrec*', varDefines[blockLevel], sts, res);
   						 blockLevel--;
-                         return ScalaTag("Block", [result]);
+  						 return ScalaTag("Block", [result]);
   	    case 'Bracket':
   	    case 'Brace':
   	    case 'Paren':
