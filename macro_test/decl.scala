@@ -12,7 +12,7 @@ object Append1{
     val d = false;
     var c = false;
     val f, h:Int = -1;
-    val f:Int = -1;
+    // val f:Int = -1;
     println($body);
     val g = f;
     // var z, y:Int = _;

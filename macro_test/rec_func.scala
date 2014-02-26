@@ -32,6 +32,7 @@ object Rec_Func{
       println(c);
       a(c + 2);
     }
+    a(3);
     // def d(c: Int){
       // println(c);
       // d(c + 1);

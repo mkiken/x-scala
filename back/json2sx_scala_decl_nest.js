@@ -10,8 +10,8 @@ var blockLevel = 0;
 var varDefines = [];
 
 //関数定義と型エイリアスを格納する
-// var funcLevel = 0;
-// var funcDefines = [];
+var funcLevel = 0;
+var funcDefines = [];
 
 //lambdaに入れる変数名を格納するための変数
 var lambdaLevel = 0;
@@ -89,40 +89,40 @@ function ScalaTag(name, elements){
 }
 
 //ブロック内の変数宣言を全てブロック文に変換する
-// function decl2Block(stats, pos){
-    // var res = [];
-    // for(var i = pos; i < stats.length; i++){
-        // var e = stats[i];
-        // if(e.type == 'BlockStat'){
-            // //変数宣言の場合
-            // if(e.def.type == 'PatValDef' || e.def.type == 'PatVarDef'){
-                // blockLevel++;
-                  // //定義を初期化
-                  // varDefines[blockLevel] = [];
-                  // var sts = ax(e);
-                  // if(varDefines[blockLevel].length == 0){
-                      // //空だとnullになってしまうので，消えないようにしておく
-                      // varDefines[blockLevel].push({notDelete:true});
-                  // }
-                  // blockLevel--;
-                // // var contents = encloses('letrec*', varDefines[blockLevel + 1], sts, decl2Block(stats, i+1));
-                  // var contents = encloses('letrec*', varDefines[blockLevel + 1], sts).concat(decl2Block(stats, i+1));
-                  // var result = ScalaTag("BlockExpression", [contents]);
-                  // res.push(result);
-                  // //それ以降の要素は既に処理がすんでいるはずなのでやらない
-                  // break;
-            // }
-            // //関数定義，型エイリアス
-            // else{
-                // ax(e);
-            // }
-        // }
-        // else{
-            // res.push(ax(e));
-        // }
-    // }
-    // return res;
-// }
+function decl2Block(stats, pos){
+    var res = [];
+    for(var i = pos; i < stats.length; i++){
+        var e = stats[i];
+        if(e.type == 'BlockStat'){
+            //変数宣言の場合
+            if(e.def.type == 'PatValDef' || e.def.type == 'PatVarDef'){
+                blockLevel++;
+  			    //定義を初期化
+  			    varDefines[blockLevel] = [];
+  			    var sts = ax(e);
+  			    if(varDefines[blockLevel].length == 0){
+  				    //空だとnullになってしまうので，消えないようにしておく
+  				    varDefines[blockLevel].push({notDelete:true});
+  			    }
+  			    blockLevel--;
+                // var contents = encloses('letrec*', varDefines[blockLevel + 1], sts, decl2Block(stats, i+1));
+  			    var contents = encloses('letrec*', varDefines[blockLevel + 1], sts).concat(decl2Block(stats, i+1));
+  			    var result = ScalaTag("BlockExpression", [contents]);
+  			    res.push(result);
+  			    //それ以降の要素は既に処理がすんでいるはずなのでやらない
+  			    break;
+            }
+            //関数定義，型エイリアス
+            else{
+                ax(e);
+            }
+        }
+        else{
+            res.push(ax(e));
+        }
+    }
+    return res;
+}
 
 function ax(t) {
 	if(t === null || t === "") return null;
@@ -174,29 +174,28 @@ function ax(t) {
   	    case 'Bindings': return t.bindings? t.bindings.map(ax) : null;
   	    case 'Block':
   						 var res, sts, result;
-                           blockLevel++;
-                           // funcLevel++;
+                           // blockLevel++;
+                           funcLevel++;
   						 //定義を初期化
-                           varDefines[blockLevel] = [];
-                           // funcDefines[funcLevel] = [];
-                           // sts = decl2Block(t.states, 0);
-  						 sts = ax(t.states);
+                           // varDefines[blockLevel] = [];
+                           funcDefines[funcLevel] = [];
+  						 sts = decl2Block(t.states, 0);
   						 res = ax(t.res);
-                           if(varDefines[blockLevel].length == 0){
-                               //空だとnullになってしまうので，消えないようにしておく
-                               varDefines[blockLevel].push({notDelete:true});
-                           }
-                           // if(funcDefines[funcLevel].length == 0){
+                           // if(varDefines[blockLevel].length == 0){
                                // //空だとnullになってしまうので，消えないようにしておく
-                               // funcDefines[funcLevel].push({notDelete:true});
+                               // varDefines[blockLevel].push({notDelete:true});
                            // }
+                           if(funcDefines[funcLevel].length == 0){
+                               //空だとnullになってしまうので，消えないようにしておく
+                               funcDefines[funcLevel].push({notDelete:true});
+                           }
                            // result = encloses('letrec*', varDefines[blockLevel], sts, res);
-                           result = encloses('letrec*', varDefines[blockLevel]).concat(sts);
-                           // result = encloses('letrec*', funcDefines[funcLevel]).concat(sts);
+                           // result = encloses('letrec*', varDefines[blockLevel]).concat(sts);
+                           result = encloses('letrec*', funcDefines[funcLevel]).concat(sts);
                            // result = encloses('letrec* () ').concat(sts);
   						 result.push(res);
-                           blockLevel--;
-                           // funcLevel--;
+                           // blockLevel--;
+                           funcLevel--;
                          return ScalaTag("Block", [result]);
   	    case 'Bracket':
   	    case 'Brace':
@@ -211,20 +210,19 @@ function ax(t) {
   	    case 'TemplateBody':
   						 var selftype, sts, result;
   						 blockLevel++;
-                           // funcLevel++;
+  						 funcLevel++;
   						 //定義を初期化
   						 varDefines[blockLevel] = [];
-                           // funcDefines[funcLevel] = [];
+  						 funcDefines[funcLevel] = [];
   						 selftype = ax(t.selftype);
   						 sts = ax(t.states);
-                           // if(varDefines[blockLevel].length == 0 && funcDefines[funcLevel].length == 0){
-                           if(varDefines[blockLevel].length == 0){
+  						 if(varDefines[blockLevel].length == 0 && funcDefines[funcLevel].length == 0){
   							 //空だとnullになってしまうので，消えないようにしておく
   							 varDefines[blockLevel].push({notDelete:true});
   						 }
-  						 result = encloses('letrec*', varDefines[blockLevel], selftype, sts);
+  						 result = encloses('letrec*', varDefines[blockLevel].concat(funcDefines[funcLevel]), selftype, sts);
   						 blockLevel--;
-                           // funcLevel--;
+  						 funcLevel--;
   						 return ScalaTag("TemplateBody", [result]);
   	    case 'TemplateStatement':
   						 //後付けだけど・・・
@@ -244,10 +242,10 @@ function ax(t) {
   							 else if(def.type === "FuncDefInfo"
   									 || def.type === "FuncDclInfo"
   									 || def.type == "ProcedureInfo"){
-                                         varDefines[def.blockLevel][def.index][1][0][3].push(annotation);
-                                         varDefines[def.blockLevel][def.index][1][0][3].push(modifier);
-										 // funcDefines[def.funcLevel][def.index][1][0][3].push(annotation);
-										 // funcDefines[def.funcLevel][def.index][1][0][3].push(modifier);
+										 // varDefines[def.blockLevel][def.index][1][0][3].push(annotation);
+										 // varDefines[def.blockLevel][def.index][1][0][3].push(modifier);
+										 funcDefines[def.funcLevel][def.index][1][0][3].push(annotation);
+										 funcDefines[def.funcLevel][def.index][1][0][3].push(modifier);
   									 }
   							 else{
   								 throw new Error("json2.TemplateStat: unintended type => " + def.type);
@@ -266,8 +264,8 @@ function ax(t) {
   									 }
 							 else if(def.type === "FuncDefInfo"
   									 || def.type == "ProcedureInfo"){
-										 varDefines[def.blockLevel][def.index][1][0][3].push(annotation);
-										 varDefines[def.blockLevel][def.index][1][0][3].push(modifier);
+										 funcDefines[def.funcLevel][def.index][1][0][3].push(annotation);
+										 funcDefines[def.funcLevel][def.index][1][0][3].push(modifier);
   									 }
 
   							 else{
@@ -313,10 +311,10 @@ function ax(t) {
 							 params.push({notDelete: true});
 						 }
 						 else if(name === params[0]) params.shift();
-                         varDefines[blockLevel].push([name, [encloses('lambda', params, ["function", "FunctionDeclaration"], [], sig, ax(t.tp), null)]]);
-						 // funcDefines[funcLevel].push([name, [encloses('lambda', params, ["function", "FunctionDeclaration"], [], sig, ax(t.tp), null)]]);
-                         return {type:"FuncDclInfo", blockLevel: blockLevel, index:varDefines[blockLevel].length-1};
-						 // return {type:"FuncDclInfo", funcLevel: funcLevel, index:funcDefines[funcLevel].length-1};
+						 // varDefines[blockLevel].push([name, [encloses('lambda', params, ["function", "FunctionDeclaration"], [], sig, ax(t.tp), null)]]);
+						 funcDefines[funcLevel].push([name, [encloses('lambda', params, ["function", "FunctionDeclaration"], [], sig, ax(t.tp), null)]]);
+						 // return {type:"FuncDclInfo", blockLevel: blockLevel, index:varDefines[blockLevel].length-1};
+						 return {type:"FuncDclInfo", funcLevel: funcLevel, index:funcDefines[funcLevel].length-1};
   	    case 'FunctionDefinition':
   						 //Signatureを解析して，必要な変数を全て読み出す
   						 var params = [], sig = t.signature, name = convertName(sig.id.name);
@@ -339,8 +337,8 @@ function ax(t) {
 								 params.shift();
 							 }
 						 }
-						 varDefines[blockLevel].push([name, [encloses('lambda', params, ["function", "FunctionDefinition"], [], sig, ax(t.tp), ax(t.expr))]]);
-						 return {type:"FuncDefInfo", blockLevel: blockLevel, index:varDefines[blockLevel].length-1};
+						 funcDefines[funcLevel].push([name, [encloses('lambda', params, ["function", "FunctionDefinition"], [], sig, ax(t.tp), ax(t.expr))]]);
+						 return {type:"FuncDefInfo", funcLevel: funcLevel, index:funcDefines[funcLevel].length-1};
 	    case 'Procedure':
   						 //Signatureを解析して，必要な変数を全て読み出す
   						 var params = [], sig = t.signature, name = convertName(sig.id.name);
@@ -358,8 +356,8 @@ function ax(t) {
 							 params.push({notDelete: true});
 						 }
 						 else if(name === params[0]) params.shift();
-						 varDefines[blockLevel].push([name, [encloses('lambda', params, ["function", "Procedure"], [], sig, null, ax(t.block))]]);
-						 return {type:"ProcedureInfo", blockLevel: blockLevel, index:varDefines[blockLevel].length-1};
+						 funcDefines[funcLevel].push([name, [encloses('lambda', params, ["function", "Procedure"], [], sig, null, ax(t.block))]]);
+						 return {type:"ProcedureInfo", funcLevel: funcLevel, index:funcDefines[funcLevel].length-1};
 
 
 
